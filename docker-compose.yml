@@ -1,0 +1,17 @@
+    version: "3.4"
+    
+    networks:
+       backend:
+       
+    services:
+       mssqlserver:
+          image: "microsoft/mssql-server-linux:latest"
+          ports:
+             - "1433"
+    
+          container_name: rpgmssqlcontainer
+          environment:
+             - ACCEPT_EULA=Y
+             - SA_PASSWORD=JustTest!
+          networks:
+             - backend
