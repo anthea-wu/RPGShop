@@ -35,6 +35,9 @@ namespace CatalogApi
 
             services.AddControllers();
             services.AddDbContext<CatalogContext>(options => options.UseSqlServer(connectionString));
+
+            // 將 appsettinss.json 中的資訊加載到 CatalogSettings 中
+            services.Configure<CatalogSettings>(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
