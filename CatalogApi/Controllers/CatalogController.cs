@@ -42,6 +42,40 @@ namespace CatalogApi.Controllers
             return Ok(items);
         }
 
+        // 每頁呈現的資料
+        // Get api/Catalog/items[?catalogTypeId=&pageSize=4&pageIndex=3]
+        [HttpGet]
+        [Route("[action]")]
+        public async Task<IActionResult> Items (int? catalogTypeId, [FromQuery] int pageSize=6, [FromQuery] int pageIndex = 0)
+        {
+            var root = _catalogContext.CatalogItems.AsQueryable();
+            if (catalogTypeId.HasValue)
+            {
+                root = root.Where(c => c.CatalogTypeId == catalogTypeId);
+            }
+
+            var totalItems = await root
+                                .LongCountAsync();
+            var itemsOnPage = await root
+                                .Select(x => new CatalogItemResponseVM
+                                {
+                                    Description = x.Description,
+                                    Id = x.Id,
+                                    Name = x.Name,
+                                    Price = x.Price,
+                                    PictureUrl = x.PictureFileName
+                                })
+                                .OrderBy(c => c.Name)
+                                .Skip(pageSize * pageIndex)
+                                .Take(pageSize)
+                                .ToListAsync();
+
+            ChangeItemPictureUrls(itemsOnPage);
+            var model = new PaginatedItemsViewModel<CatalogItemResponseVM>(pageIndex, pageSize, totalItems, itemsOnPage);
+
+            return Ok(model);
+        }
+
         [HttpGet]
         [Route("items/{id:int}")]
         public async Task<IActionResult> GetItemById (int id)
@@ -71,6 +105,12 @@ namespace CatalogApi.Controllers
             return NotFound();
         }
 
+
+
+        private void ChangeItemPictureUrls(List<CatalogItemResponseVM> list)
+        {
+            list.ForEach(x => x.PictureUrl = ChangeItemPictureUrl(x.PictureUrl));
+        }
 
         private string ChangeItemPictureUrl (string fileName)
         {
